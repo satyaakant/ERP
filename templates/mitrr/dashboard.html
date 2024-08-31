@@ -1,0 +1,61 @@
+<head>
+    <title>Dashboard Admin</title>
+</head>
+{% extends 'base.html' %}
+
+<!-- css start -->
+{% block additional_css %}
+{% endblock %}
+
+<!-- html start -->
+{% block content %}
+
+{% include 'adminn/components/navbar.html' %}
+
+<main class="px-2">
+    <div class="d-flex" style="gap: 10px;">
+        <div class="d-none d-md-block">
+            {% include 'adminn/components/sidebar.html' %}
+        </div>
+        <sections class="w-100">
+            <ol class="breadcrumb p-2 rounded-2" style="background-color: var(--secondary);">
+                <li class="breadcrumb-item">Admin</li>
+                <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
+            </ol>
+            <div class="row">
+                <div class="col-md-3 mb-2">
+                    <div class="card h-100 text-white" style="background-color: var(--primary);">
+                        <div class="card-body">
+                            <p>No. of Students</p>
+                            <h4>{{ students|length }}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <div class="card h-100 text-white" style="background-color: var(--primary);">
+                        <div class="card-body">
+                            <p>No. of Teachers</p>
+                            <h4>{{ teachers|length }}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-2">
+                    <div class="card h-100 text-white" style="background-color: var(--primary);">
+                        <div class="card-body">
+                            something
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+<footer class="w-100 p-0 d-block d-md-none" style="position: absolute; bottom: 10px; left: 0;">
+    {% include 'adminn/components/footer.html' %}
+</footer>
+
+{% endblock %}
+
+<!-- js start -->
+{% block additional_js %}
+{% endblock %}

@@ -1,0 +1,202 @@
+<head>
+    <title>Teacher Admin</title>
+</head>
+{% extends 'base.html' %}
+
+<!-- css start -->
+{% block additional_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+<style>
+    .btn-primary{
+        border: none;
+        color: white !important; 
+        background-color: var(--primary) !important;
+    }
+    .popup {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0,0,0);
+        background-color: rgba(0,0,0,0.4);
+        justify-content: center;
+        align-items: center;
+    }
+    .popup-content {
+        display: none;
+        background-color: #fefefe;
+        padding: 10px;
+        border: 1px solid #888;
+        border-radius: 10px;
+        min-width: 50%;
+    }
+    @media screen and (max-width: 650px) {
+        .popup-content{
+            width: 90%;
+        }
+    }
+    .choices__inner{
+        border-radius: 4.5px !important;
+        height: 39px !important;
+        min-height: 0 !important;
+    }
+    .choices__list--multiple .choices__item{
+        background-color: var(--primary);
+    }
+</style>
+{% endblock %}
+
+<!-- html start -->
+{% block content %}
+
+{% include 'adminn/components/navbar.html' %}
+<main class="px-2">
+    <div class="d-flex" style="gap: 10px;">
+        <div class="d-none d-md-block">
+            {% include 'adminn/components/sidebar.html' %}
+        </div>
+        <sections class="w-100">
+            <div class="mb-2 p-2 rounded-2 d-flex align-items-center justify-content-between" style="background-color: var(--secondary);">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item">Admin</li>
+                    <li class="breadcrumb-item active" aria-current="page">Teachers</li>
+                </ol>
+
+                <span class="px-4 py-1 btn" style="color: white; background-color: var(--primary);" onclick="openPopup()">add</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead style="white-space: nowrap; --bs-table-bg: var(--primary); --bs-table-color: white;">
+                        <tr>
+                            <th>S.No.</th>
+                            <th>Teacher ID</th>
+                            <th>Name</th>
+                            <th>Subjects</th>
+                            <th>Email ID</th>
+                            <th>Phone Number</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for teacher in teachers %}
+                        <tr>
+                            <td>{{ teacher.id }}</td>
+                            <td>{{ teacher.teacher_id }}</td>
+                            <td>{{ teacher.name }}</td>
+                            <td>{{ teacher.subjects.subject1 }}</td>
+                            <td>{{ teacher.email_id }}</td>
+                            <td>{{ teacher.phone_number }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</main>
+<footer class="w-100 p-0 d-block d-md-none" style="position: absolute; bottom: 10px; left: 0;">
+    {% include 'adminn/components/footer.html' %}
+</footer>
+
+<!-- popups -->
+<div class="popup">
+    <div class="popup-content">
+        <div class="d-flex align-items-start justify-content-between mb-2" style="font-size: 1.5rem;">
+            <h2 class="m-0">Add Teacher</h2>
+            <span class="close" onclick="closePopup('popup','popup-content')" style="cursor: pointer; transform: translateY(-10px);">&times;</span>
+        </div>
+        <form>
+            <div class="row">
+                <div class="mb-3 col-md-6">
+                    <label for="name" class="form-label">Name</label>
+                    <input type="text" class="form-control" id="name" required>
+                </div>
+                <div class="mb-3 col-md-6">
+                    <label for="subject" class="form-label">Subjects</label>
+                    <select class="form-control" id="subject" multiple>
+                        <option value="subject1">Subjec1</option>
+                        <option value="subject2">Subject2</option>
+                        <option value="subject3">Subject3</option>
+                    </select>
+                </div>            
+            </div>
+            <div class="row">
+                <div class="mb-3 col-md-6">
+                    <label for="email" class="form-label">Email address</label>
+                    <input type="email" class="form-control" id="email" aria-describedby="emailHelp">
+                    <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+                </div>
+                <div class="mb-3 col-md-6">
+                    <label for="phone_number" class="form-label">Phone Number</label>
+                    <input type="tel" class="form-control" id="phone_number">
+                </div>
+            </div>
+            <button type="submit" onclick="addTeacher()" class="btn btn-primary w-100">Submit</span>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+<!-- js start -->
+{% block additional_js %}
+
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+<script>
+    const element = document.getElementById('subject');
+    const choices = new Choices(element, {
+        removeItemButton: true,
+        placeholder: false,
+        placeholderValue: 'Select subjects',
+    });
+
+    function closePopup(pop,pcontent) {
+        document.querySelector(`.${pop}`).style.display = 'none';
+        document.querySelector(`.${pcontent}`).style.display = 'none';
+    }
+    function openPopup() {
+        document.querySelector('.popup').style.display = 'flex';
+        document.querySelector('.popup-content').style.display = 'block';
+    }
+    function addTeacher() {
+        event.preventDefault()
+
+        const name = document.getElementById('name').value
+        const email = document.getElementById('email').value
+        const phone_number = document.getElementById('phone_number').value
+
+        const subjects=[]
+        element.addEventListener('change', function () {
+            const selectedValues = choices.getValue(true);
+            subjects = selectedValues
+        });
+        console.log(subjects)
+        
+        const data = {
+            "name": name,
+            "subject": subjects,
+            "email": email,
+            "phone_number": phone_number
+        }
+        console.log(data)
+
+        // fetch('/add-teacher-adminn/', {
+        //     method: 'POST',
+        //     headers: {
+        //         'Content-Type': 'application/json'
+        //     },
+        //     body: JSON.stringify(data)
+        // })
+        // .then(response => {
+        //     console.log(response.json())
+        // })
+        // .then(data => {
+        //     console.log(data)
+        // })
+    }
+</script>
+{% endblock %}
+
