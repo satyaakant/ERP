@@ -1,5 +1,5 @@
 <head>
-    <title>Teacher Admin</title>
+    <title>Teacher Mitrr</title>
 </head>
 {% extends 'base.html' %}
 
@@ -53,17 +53,17 @@
 <!-- html start -->
 {% block content %}
 
-{% include 'adminn/components/navbar.html' %}
+{% include 'mitrr/components/navbar.html' %}
 <main class="px-2">
     <div class="d-flex" style="gap: 10px;">
         <div class="d-none d-md-block">
-            {% include 'adminn/components/sidebar.html' %}
+            {% include 'mitrr/components/sidebar.html' %}
         </div>
         <sections class="w-100">
             <div class="mb-2 p-2 rounded-2 d-flex align-items-center justify-content-between" style="background-color: var(--secondary);">
                 <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item">Admin</li>
-                    <li class="breadcrumb-item active" aria-current="page">Teachers</li>
+                    <li class="breadcrumb-item">Mitrr</li>
+                    <li class="breadcrumb-item active" aria-current="page">Teacher</li>
                 </ol>
 
                 <span class="px-4 py-1 btn" style="color: white; background-color: var(--primary);" onclick="openPopup()">add</span>
@@ -81,7 +81,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for teacher in teachers %}
+                        <!-- {% for teacher in teachers %}
                         <tr>
                             <td>{{ teacher.id }}</td>
                             <td>{{ teacher.teacher_id }}</td>
@@ -90,7 +90,7 @@
                             <td>{{ teacher.email_id }}</td>
                             <td>{{ teacher.phone_number }}</td>
                         </tr>
-                        {% endfor %}
+                        {% endfor %} -->
                     </tbody>
                 </table>
             </div>
@@ -98,7 +98,7 @@
     </div>
 </main>
 <footer class="w-100 p-0 d-block d-md-none" style="position: absolute; bottom: 10px; left: 0;">
-    {% include 'adminn/components/footer.html' %}
+    {% include 'mitrr/components/footer.html' %}
 </footer>
 
 <!-- popups -->
@@ -117,7 +117,7 @@
                 <div class="mb-3 col-md-6">
                     <label for="subject" class="form-label">Subjects</label>
                     <select class="form-control" id="subject" multiple>
-                        <option value="subject1">Subjec1</option>
+                        <option value="subject1">Subject1</option>
                         <option value="subject2">Subject2</option>
                         <option value="subject3">Subject3</option>
                     </select>
