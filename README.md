@@ -1,2 +1,2 @@
 # ERP
-ERP is an attendance model made for school college
+ERP is an attendance model made for schools and colleges
