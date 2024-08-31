@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from frontend.models import StudentListAdmin, TeacherListAdmin
+from mitrr.models import StudentListAdmin, TeacherListAdmin
 
 class StudentSerializer(serializers.ModelSerializer):
     class Meta:
