@@ -1,12 +1,12 @@
 from rest_framework import serializers
-from mitrr.models import StudentListAdmin, TeacherListAdmin
+from mitrr.models import StudentList, TeacherList
 
 class StudentSerializer(serializers.ModelSerializer):
     class Meta:
-        model = StudentListAdmin
+        model = StudentList
         fields = '__all__'
 
 class TeacherSerializer(serializers.ModelSerializer):
     class Meta:
-        model = TeacherListAdmin
+        model = TeacherList
         fields = '__all__'

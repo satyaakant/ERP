@@ -1,7 +1,15 @@
 from django.db import models
 
 # Create your models here.
-class StudentListAdmin(models.Model):
+class User(models.Model):
+    name = models.CharField(max_length=100)
+    username = models.CharField(max_length=100)
+    password = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.name}"
+
+class StudentList(models.Model):
     enroll_number = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
     section = models.CharField(max_length=100)
@@ -14,11 +22,14 @@ class StudentListAdmin(models.Model):
     def __str__(self):
         return f"{self.name} - {self.enroll_number}"
     
-class TeacherListAdmin(models.Model):
+class TeacherList(models.Model):
     teacher_id = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
     subjects = models.JSONField()
     email_id = models.EmailField(max_length=254)
     phone_number = models.CharField(max_length=15)
     password = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.name} - {self.teacher_id}"
 
