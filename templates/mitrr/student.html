@@ -1,0 +1,67 @@
+<head>
+    <title>Student Admin</title>
+</head>
+{% extends 'base.html' %}
+
+<!-- css start -->
+{% block additional_css %}
+{% endblock %}
+
+<!-- html start -->
+{% block content %}
+
+{% include 'adminn/components/navbar.html' %}
+
+<main class="px-2">
+    <div class="d-flex" style="gap: 10px;">
+        <div class="d-none d-md-block">
+            {% include 'adminn/components/sidebar.html' %}
+        </div>
+        <sections class="w-100">
+            <ol class="breadcrumb p-2 rounded-2" style="background-color: var(--secondary);">
+                <li class="breadcrumb-item">Admin</li>
+                <li class="breadcrumb-item active" aria-current="page">Students</li>
+            </ol>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="table-secondary" style="white-space: nowrap; --bs-table-bg: var(--primary); --bs-table-color: white;">
+                        <tr>
+                            <th>S.No.</th>
+                            <th>Enroll Number</th>
+                            <th>Name</th>
+                            <th>Section</th>
+                            <th>Semester</th>
+                            <th>Year</th>
+                            <th>Email ID</th>
+                            <th>Phone Number</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td>{{ student.id }}</td>
+                            <td>{{ student.enroll_number }}</td>
+                            <td>{{ student.name }}</td>
+                            <td>{{ student.section }}</td>
+                            <td>{{ student.sem }}</td>
+                            <td>{{ student.year }}</td>
+                            <td>{{ student.email_id }}</td>
+                            <td>{{ student.phone_number }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</main>
+<footer class="w-100 p-0 d-block d-md-none" style="position: absolute; bottom: 10px; left: 0;">
+    {% include 'adminn/components/footer.html' %}
+</footer>
+
+{% endblock %}
+
+<!-- js start -->
+{% block additional_js %}
+{% endblock %}
+
