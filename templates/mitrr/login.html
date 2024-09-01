@@ -3,13 +3,60 @@
 </head>
 {% extends 'base.html' %}
 
+{% load static %}
 {% block additional_css %}
+<style>
+    .btn-primary{
+        border: none;
+        color: black !important; 
+        background-color: var(--secondary) !important;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div>
-    <form method="POST">
+<div class="d-flex align-items-center justify-content-center h-100" style="background-color: var(--secondary);">
+    <div class="d-flex justify-content-around rounded-2 p-2 w-sm-100" style="background-color: var(--primary); height: 85%; width: 90%;">
+        <div class="col-12 col-md-6 p-2 text-white d-flex flex-column justify-content-center position-relative">
+            <div>
+                <div class="w-100 rounded-2 d-md-none" style="height: 200px; background-repeat: no-repeat; background-size: cover; background-position: center; background-image: url({% static 'img/login.png' %});"></div>
+                <br>
+                <h1 class="m-0">Welcome Back!</h1>
+                <small style="color: var(--secondary);">Enter your details</small>
+            </div>
+            
+            <form class="mt-4" method="POST">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control w-100" id="username" name="username" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control w-100" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Submit</button>
+                <div class="d-flex align-items-center justify-content-between">
+                    <small style="cursor: pointer; color: var(--secondary);">New user?<span style="color: white;">Contact Admin.</span></small>
+                    <small style="cursor: pointer; color: var(--secondary);">Forgot Password?</small>
+                </div>
+            </form>
+
+            <div style="position: absolute; bottom: 0;">
+                <small style="color: var(--secondary);">@Designed/Developed by mitrr</small>
+            </div>
+        </div> 
+        <div class="col-md-5 d-none d-md-block rounded-4" style="background-repeat: no-repeat; background-size: cover; background-position: center; background-image: url({% static 'img/login.png' %});">
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_js %}
+{% endblock %}
+<!-- <form method="POST">
         {% csrf_token %}
+        </div>
         <div class="mb-3">
             <label for="username" class="form-label">Username</label>
             <input type="text" class="form-control" id="username" name="username" required>
@@ -19,9 +66,4 @@
             <input type="password" class="form-control" id="password" name="password" required>
         </div>
         <button type="submit" class="btn btn-primary w-100">Submit</span>
-    </form>
-</div>
-{% endblock %}
-
-{% block additional_js %}
-{% endblock %}
+    </form> -->
