@@ -7,4 +7,7 @@ urlpatterns = [
     path('mitrr/students/add/', views.addStudentList_Mitrr, name='add-student-list-mitrr'), 
     path('mitrr/teachers/', views.getTeacherList_Mitrr, name='get-teacher-list-mitrr'),  
     path('mitrr/teachers/add/', views.addTeacherList_Mitrr, name='add-teacher-list-mitrr'),  
+ # Delete endpoints
+    path('mitrr/students/delete/<str:enroll_number>/', views.deleteStudent_Mitrr, name='delete-student-mitrr'),
+    path('mitrr/teachers/delete/<str:teacher_id>/', views.deleteTeacher_Mitrr, name='delete-teacher-mitrr'),
 ]

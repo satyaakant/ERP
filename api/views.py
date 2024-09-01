@@ -13,8 +13,12 @@ def getStudentList_Mitrr(request):
 def addStudentList_Mitrr(request):
     serializer = StudentSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
-        return Response({"message": "Student added successfully!"})
+        unique_field_value = serializer.validated_data.get('email_id')
+        if  StudentList.objects.filter(email_id=unique_field_value).exists():
+            return Response({"error": "Student already exists."}, status=400)
+        else:
+            serializer.save()
+            return Response({"message": "Student added successfully!"})
     return Response(serializer.errors, status=400)
 @api_view(['GET'])
 def getTeacherList_Mitrr(request):
@@ -33,3 +37,20 @@ def addTeacherList_Mitrr(request):
             return Response({"message": "Teacher added successfully!"}, status=200)
     
     return Response(serializer.errors, status=400)
+@api_view(['DELETE'])
+def deleteStudent_Mitrr(request, enroll_number):
+    try:
+        student = StudentList.objects.get(enroll_number=enroll_number)
+        student.delete()
+        return Response({"message": "Student deleted successfully!"}, status=status.HTTP_204_NO_CONTENT)
+    except StudentList.DoesNotExist:
+        return Response({"error": "Student not found."}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['DELETE'])
+def deleteTeacher_Mitrr(request, teacher_id):
+    try:
+        teacher = TeacherList.objects.get(teacher_id=teacher_id)
+        teacher.delete()
+        return Response({"message": "Teacher deleted successfully!"}, status=status.HTTP_204_NO_CONTENT)
+    except TeacherList.DoesNotExist:
+        return Response({"error": "Teacher not found."}, status=status.HTTP_404_NOT_FOUND)

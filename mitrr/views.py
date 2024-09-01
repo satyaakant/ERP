@@ -123,3 +123,38 @@ def add_student(request):
         if response.status_code == 400:
             return JsonResponse({'message': 'Error', 'data': response.json(), 'status': 400})
 
+def delete_student(request, enroll_number):
+    jwttoken = request.session.get('jwttoken')
+    url = f"http://127.0.0.1:8000/api/mitrr/students/delete/{enroll_number}/"
+    headers = {
+        "Authorization": f"Bearer {jwttoken}",
+        "Content-Type": "application/json"
+    }
+    response = requests.delete(url, headers=headers)
+    
+    if response.status_code == 204:
+        return JsonResponse({'message': 'Student deleted successfully!', 'status': 204})
+    else:
+        try:
+            error_data = response.json()
+        except ValueError:  # In case there's no JSON to decode
+            error_data = {'error': 'An unexpected error occurred'}
+        return JsonResponse({'message': 'Error deleting student', 'data': error_data, 'status': response.status_code})
+
+def delete_teacher(request, teacher_id):
+    jwttoken = request.session.get('jwttoken')
+    url = f"http://127.0.0.1:8000/api/mitrr/teachers/delete/{teacher_id}/"
+    headers = {
+        "Authorization": f"Bearer {jwttoken}",
+        "Content-Type": "application/json"
+    }
+    response = requests.delete(url, headers=headers)
+    
+    if response.status_code == 204:
+        return JsonResponse({'message': 'Teacher deleted successfully!', 'status': 204})
+    else:
+        try:
+            error_data = response.json()
+        except ValueError:  # In case there's no JSON to decode
+            error_data = {'error': 'An unexpected error occurred'}
+        return JsonResponse({'message': 'Error deleting teacher', 'data': error_data, 'status': response.status_code})
