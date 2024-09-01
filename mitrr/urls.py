@@ -6,4 +6,7 @@ urlpatterns = [
     path("dashboard/", views.dashboard, name="dashboard"),
     path("teacher/", views.teacher, name="teacher"),
     path("student/", views.student, name="student"),
+    
+    # rest
+    path("rest/add-teacher/", views.add_teacher, name="add-teacher"),
 ]
