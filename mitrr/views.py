@@ -38,3 +38,5 @@ def teacher(request):
 
 def student(request):
     return render(request, 'mitrr/student.html')
+
+
