@@ -66,14 +66,13 @@ def add_teacher(request):
     if request.method == 'POST': 
         data = json.loads(request.body)
         teacherId = str(random.randint(10000, 99999))
-
         dataa = {
             "teacher_id": teacherId,
             "name": data['name'],
             "subjects": data['subject'],
             "email_id": data['email'],
             "phone_number": data['phone_number'],
-            "password": data['name'] + teacherId + "@jims",
+            "password": data['name'][:3] + teacherId + '@jims',
         }
         
         url = "http://127.0.0.1:8000/" + "api/mitrr/teachers/add/"

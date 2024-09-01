@@ -78,12 +78,15 @@
                             <th>Subjects</th>
                             <th>Email ID</th>
                             <th>Phone Number</th>
+                            <th>Password</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody style="white-space: nowrap;">
                         {% for teacher in teachers %}
                         <tr>
-                            <td>{{ teacher.id }}</td>
+                            <!-- <td>{{ teacher.id }}</td> -->
+                            <td>{{ forloop.counter }}</td>
                             <td>{{ teacher.teacher_id }}</td>
                             <td>{{ teacher.name }}</td>
                             <td>
@@ -93,6 +96,8 @@
                             </td>
                             <td>{{ teacher.email_id }}</td>
                             <td>{{ teacher.phone_number }}</td>
+                            <td>{{ teacher.password }}</td>
+                            <td> <span class="btn btn-sm btn-primary" onclick="deleteTeacher({{ teacher.teacher_id }})">Delete</span> </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -221,6 +226,10 @@
                 });
             }
         })
+    }
+
+    function deleteTeacher(teacherId){
+        console.log("del", teacherId)
     }
 </script>
 {% endblock %}
