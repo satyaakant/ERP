@@ -54,6 +54,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  
+SESSION_COOKIE_NAME = 'sessionid'
+SESSION_COOKIE_AGE = 1209600
+SESSION_COOKIE_SECURE = True  # Set to True if using HTTPS
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  
+
 ROOT_URLCONF = 'erp.urls'
 
 TEMPLATES = [

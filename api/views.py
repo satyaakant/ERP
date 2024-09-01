@@ -25,6 +25,11 @@ def getTeacherList_Mitrr(request):
 def addTeacherList_Mitrr(request):
     serializer = TeacherSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
-        return Response({"message": "Teacher added successfully!"})
+        unique_field_value = serializer.validated_data.get('email_id')
+        if TeacherList.objects.filter(email_id=unique_field_value).exists():
+            return Response({"error": "Teacher already exists."}, status=400)
+        else:
+            serializer.save()
+            return Response({"message": "Teacher added successfully!"}, status=200)
+    
     return Response(serializer.errors, status=400)
