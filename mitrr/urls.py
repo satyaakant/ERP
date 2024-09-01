@@ -9,4 +9,6 @@ urlpatterns = [
     
     # rest
     path("rest/add-teacher/", views.add_teacher, name="add-teacher"),
+    path("rest/add-student/", views.add_student, name="add-student"),
+
 ]

@@ -57,8 +57,17 @@ def teacher(request):
     return render(request, 'mitrr/teacher.html', context)
 
 def student(request):
-    return render(request, 'mitrr/student.html')
-
+    jwttoken = request.session.get('jwttoken')
+    url = "http://127.0.0.1:8000/" + "api/mitrr/students/"
+    headers = {
+        "Authorization": f"Bearer {jwttoken}",
+        "Content-Type": "application/json"
+    }
+    response = requests.get(url, headers=headers)
+    context = {
+        'students': response.json(),
+    }
+    return render(request, 'mitrr/student.html', context)
 
 # rest
 def add_teacher(request):
@@ -81,8 +90,36 @@ def add_teacher(request):
             "Content-Type": "application/json"
         }
         response = requests.post(url, headers=headers, data=json.dumps(dataa))
-        # print(response.json())
         if response.status_code == 200:
             return JsonResponse({'message': 'Success', 'data': response.json(), 'status': 200})
         if response.status_code == 400:
             return JsonResponse({'message': 'Error', 'data': response.json(), 'status': 400})
+
+# REST API endpoint for adding a student
+def add_student(request):
+    jwttoken = request.session.get('jwttoken')
+    if request.method == 'POST': 
+        data = json.loads(request.body)
+        enroll_number = str(random.randint(10000, 99999))
+        student_data = {
+            "enroll_number": enroll_number,
+            "name": data['name'],
+            "section": data['section'],
+            "sem": data['sem'],
+            "year": data['year'],
+            "email_id": data['email'],
+            "phone_number": data['phone_number'],
+            "password": data['name'][:3] + enroll_number + '@jims',
+        }
+        
+        url = "http://127.0.0.1:8000/" + "api/mitrr/students/add/"
+        headers = {
+            "Authorization": f"Bearer {jwttoken}",
+            "Content-Type": "application/json"
+        }
+        response = requests.post(url, headers=headers, data=json.dumps(student_data))
+        if response.status_code == 200:
+            return JsonResponse({'message': 'Success', 'data': response.json(), 'status': 200})
+        if response.status_code == 400:
+            return JsonResponse({'message': 'Error', 'data': response.json(), 'status': 400})
+
