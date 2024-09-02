@@ -1,6 +1,5 @@
 from django.db import models
 import uuid
-from django.contrib.auth.hashers import make_password
 
 # Student model
 class Student(models.Model):
@@ -15,11 +14,6 @@ class Student(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.enroll_number})"
-
-    def save(self, *args, **kwargs):
-        if not self.pk or not self.password.startswith('pbkdf2_sha256$'):
-            self.password = make_password(self.password)
-        super().save(*args, **kwargs)
 
 # Custom session model
 class CustomSession(models.Model):
