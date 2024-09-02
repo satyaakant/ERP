@@ -1,0 +1,28 @@
+<head>
+    <title>Dashboard Mitrr</title>
+</head>
+{% extends 'base.html' %}
+
+<!-- css start -->
+{% block additional_css %}
+{% endblock %}
+
+<!-- html start -->
+{% block content %}
+
+{% include 'mitrr/components/navbar.html' %}
+
+<body>
+    <div class="container mt-5">
+        <h1>Welcome, {{ user.name }}!</h1>
+        <p>You are logged in as: {{ user.usertype }}</p>
+        <p>Your username: {{ user.username }}</p>
+        <!-- Additional dashboard content -->
+    </div>
+</body>
+
+{% endblock %}
+
+<!-- js start -->
+{% block additional_js %}
+{% endblock %}
