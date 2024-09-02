@@ -1,7 +1,9 @@
 /* css */
 :root {
-    --primary: #494949;
-    --secondary: #d4d4d4;
+    --primary: #272727;
+    --secondary: #8eb19b;
+    /* --primary: #494949; */
+    /* --secondary: #494949; */
 }
 body::-webkit-scrollbar{
     display: none;
