@@ -10,4 +10,7 @@ urlpatterns = [
  # Delete endpoints
     path('mitrr/students/delete/<str:enroll_number>/', views.deleteStudent_Mitrr, name='delete-student-mitrr'),
     path('mitrr/teachers/delete/<str:teacher_id>/', views.deleteTeacher_Mitrr, name='delete-teacher-mitrr'),
+    #attendance
+        path('attendance/', views.getAttendanceList_Mitrr,name='get-attendance-list-mitrr'),
+
 ]
