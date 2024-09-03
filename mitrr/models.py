@@ -1,16 +1,16 @@
 from django.db import models
 import uuid
 
-# Create your models here.
+# User model
 class User(models.Model):
     name = models.CharField(max_length=100)
     username = models.CharField(max_length=100)
     password = models.CharField(max_length=100)
 
     def __str__(self):
-        
         return f"{self.name}"
 
+# Custom session model
 class CustomSession(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     usertype = models.CharField(max_length=100)
@@ -21,6 +21,7 @@ class CustomSession(models.Model):
     def __str__(self):
         return f"Session for {self.user.username}"
 
+# Student list model
 class StudentList(models.Model):
     enroll_number = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
@@ -33,6 +34,8 @@ class StudentList(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.enroll_number}"
+
+# Teacher list model
 class TeacherList(models.Model):
     teacher_id = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
@@ -44,15 +47,18 @@ class TeacherList(models.Model):
     def __str__(self):
         return f"{self.name} - {self.teacher_id}"
 
+# Subject model
 class Subject(models.Model):
     name = models.CharField(max_length=100)
-    code = models.CharField(max_length=10)
+    code = models.CharField(max_length=10, unique=True)
     semester = models.IntegerField()
     year = models.IntegerField()
+    teacher = models.ForeignKey(TeacherList, on_delete=models.SET_NULL, null=True, blank=True)  # Link to Teacher
 
     def __str__(self):
-        return f"{self.name} ({self.code})"
+        return f"{self.name} ({self.code}) - Taught by {self.teacher.name if self.teacher else 'No teacher assigned'}"
 
+# Attendance model
 class Attendance(models.Model):
     STATUS_CHOICES = (
         ('P', 'Present'),
@@ -61,8 +67,9 @@ class Attendance(models.Model):
     student = models.ForeignKey(StudentList, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, null=True, blank=True)
     date = models.DateField()
-    year = models.CharField(max_length=100,null=True, blank=True)  # Redundant but flexible
+    year = models.CharField(max_length=100, null=True, blank=True)
     section = models.CharField(max_length=100, null=True, blank=True)
+    semester = models.IntegerField(null=True, blank=True)  # Added semester field
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='P')
 
     class Meta:

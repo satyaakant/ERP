@@ -5,6 +5,7 @@ from .models import User, CustomSession, StudentList, TeacherList, Attendance, S
 
 admin.site.register(User)
 admin.site.register(CustomSession)
+
 class StudentListAdmin(admin.ModelAdmin):
     list_display = ('name', 'enroll_number', 'year', 'section', 'sem', 'email_id')
     list_filter = ('year', 'section')  # Filter by year and section
@@ -25,8 +26,8 @@ class SubjectAdmin(admin.ModelAdmin):
 admin.site.register(Subject, SubjectAdmin)
 
 class AttendanceAdmin(admin.ModelAdmin):
-    list_display = ('student', 'subject', 'date', 'status', 'year', 'section')
-    list_filter = ('year', 'section', 'status', 'subject')  # Filter by year, section, status, and subject
+    list_display = ('student', 'subject', 'date', 'status', 'year', 'section', 'semester')
+    list_filter = ('year', 'section', 'status', 'subject', 'semester')  # Filter by year, section, status, subject, and semester
     search_fields = ('student__name', 'student__enroll_number')
 
 admin.site.register(Attendance, AttendanceAdmin)
