@@ -13,9 +13,8 @@ urlpatterns = [
     path('mitrr/teachers/delete/<str:teacher_id>/', views.deleteTeacher_Mitrr, name='delete-teacher-mitrr'),
 
     # Attendance-related endpoints
-    path('attendance/<int:year>/', views.getAttendanceList_Mitrr, name='get-attendance-list-mitrr'),  # Year is now an integer like 1, 2, 3, 4
+    path('attendance/<int:batch_id>/', views.getAttendanceList_Mitrr, name='get-attendance-list-mitrr'),  # Use batch_id instead of year
     path('attendance/add/', views.addAttendance, name='add-attendance'),
-    path('attendance/filter/', views.getFilteredAttendanceList, name='get-filtered-attendance'),
     
     # Timetable-related endpoints
     path('timetable/', views.getTimetable, name='get-timetable'),
@@ -35,7 +34,6 @@ urlpatterns = [
     path('notifications/', views.getNotificationList, name='get-notification-list'),
     path('notifications/add/', views.addNotification, name='add-notification'),
     path('notifications/delete/<int:pk>/', views.deleteNotification, name='delete-notification'),
-
 
     # Event-related endpoints
     path('events/', views.getEventList, name='get-event-list'),

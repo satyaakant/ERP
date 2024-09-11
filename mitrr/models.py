@@ -21,7 +21,17 @@ class CustomSession(models.Model):
     def __str__(self):
         return f"Session for {self.user.username}"
 
-# Student list model
+# Batch model
+class Batch(models.Model):
+    batch_name = models.CharField(max_length=100)
+    year = models.IntegerField()
+    description = models.TextField(blank=True, null=True)
+    semester = models.IntegerField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.batch_name} - {self.year}"
+
+# StudentList model
 class StudentList(models.Model):
     enroll_number = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
@@ -31,11 +41,12 @@ class StudentList(models.Model):
     email_id = models.EmailField(max_length=254)
     phone_number = models.CharField(max_length=15)
     password = models.CharField(max_length=100)
+    batch = models.ForeignKey(Batch, on_delete=models.SET_NULL, null=True, blank=True)  # Reference to Batch model
 
     def __str__(self):
         return f"{self.name} - {self.enroll_number}"
 
-# Teacher list model
+# TeacherList model
 class TeacherList(models.Model):
     teacher_id = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
@@ -67,7 +78,7 @@ class Attendance(models.Model):
     student = models.ForeignKey(StudentList, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, null=True, blank=True)
     date = models.DateField()
-    year = models.CharField(max_length=100, null=True, blank=True)
+    batch = models.ForeignKey(Batch, on_delete=models.SET_NULL, null=True, blank=True)  # Reference to Batch model
     section = models.CharField(max_length=100, null=True, blank=True)
     semester = models.IntegerField(null=True, blank=True)
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='P')
@@ -130,8 +141,6 @@ class Notification(models.Model):
     def __str__(self):
         return f"Notification for {self.receiver.name} - {self.title}"
 
-
-
 # Event model
 class Event(models.Model):
     event_name = models.CharField(max_length=100)
@@ -144,8 +153,6 @@ class Event(models.Model):
     def __str__(self):
         return f"{self.event_name} on {self.date}"
 
-
-
 # Attendance Report model
 class AttendanceReport(models.Model):
     student = models.ForeignKey(StudentList, on_delete=models.CASCADE)
@@ -156,13 +163,3 @@ class AttendanceReport(models.Model):
 
     def __str__(self):
         return f"{self.student.name}'s Attendance Report"
-
-# Batch model
-class Batch(models.Model):
-    batch_name = models.CharField(max_length=100)
-    year = models.IntegerField()
-    description = models.TextField(blank=True, null=True)
-    semester = models.IntegerField(blank=True, null=True)
-
-    def __str__(self):
-        return f"{self.batch_name} - {self.year}"
