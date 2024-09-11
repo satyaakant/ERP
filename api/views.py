@@ -2,7 +2,6 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from datetime import datetime
-
 from mitrr.models import (
     User, CustomSession, StudentList, TeacherList, Attendance, Subject, TimeTable, 
     Exam, Result, Notification,  Event,  AttendanceReport, Batch
@@ -14,17 +13,16 @@ from .serializers import (
     AttendanceReportSerializer, BatchSerializer
 )
 
-
-# StudentList views
+# StudentList Views
 @api_view(['GET'])
 def getStudentList_Mitrr(request):
-    year = request.query_params.get('year')
+    batch = request.query_params.get('batch')
     section = request.query_params.get('section')
 
-    if year and section:
-        students = StudentList.objects.filter(year=year, section=section)
-    elif year:
-        students = StudentList.objects.filter(year=year)
+    if batch and section:
+        students = StudentList.objects.filter(batch=batch, section=section)
+    elif batch:
+        students = StudentList.objects.filter(batch=batch)
     elif section:
         students = StudentList.objects.filter(section=section)
     else:
@@ -54,16 +52,15 @@ def deleteStudent_Mitrr(request, enroll_number):
     except StudentList.DoesNotExist:
         return Response({"error": "Student not found."}, status=status.HTTP_404_NOT_FOUND)
 
-# TeacherList views
+
+# TeacherList Views
 @api_view(['GET'])
 def getTeacherList_Mitrr(request):
     teachers = TeacherList.objects.all()
-    
     teacher_data = []
     for teacher in teachers:
         subjects = Subject.objects.filter(teacher=teacher)
         subjects_data = [{"name": subject.name, "code": subject.code, "semester": subject.semester, "year": subject.year} for subject in subjects]
-
         teacher_data.append({
             "teacher_id": teacher.teacher_id,
             "name": teacher.name,
@@ -71,7 +68,6 @@ def getTeacherList_Mitrr(request):
             "phone_number": teacher.phone_number,
             "subjects": subjects_data
         })
-
     return Response(teacher_data)
 
 @api_view(['POST'])
@@ -84,7 +80,6 @@ def addTeacherList_Mitrr(request):
         else:
             serializer.save()
             return Response({"message": "Teacher added successfully!"}, status=200)
-    
     return Response(serializer.errors, status=400)
 
 @api_view(['DELETE'])
@@ -96,137 +91,196 @@ def deleteTeacher_Mitrr(request, teacher_id):
     except TeacherList.DoesNotExist:
         return Response({"error": "Teacher not found."}, status=status.HTTP_404_NOT_FOUND)
 
-# TimeTable views
-@api_view(['POST'])
-def addTimetable(request):
-    serializer = TimetableSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response({"message": "Timetable added successfully!"}, status=200)
-    else:
-        return Response(serializer.errors, status=400)
-    
-@api_view(['GET'])
-def getTimetable(request):
-    timeTable = TimeTable.objects.all()
-    serializer = TimetableSerializer(timeTable, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
 
-# Attendance views
+# Attendance Views
 @api_view(['GET'])
-def getAttendanceList_Mitrr(request, year):
+def getAttendanceList_Mitrr(request, batch_id):
     enroll_number = request.query_params.get('enroll_number')
     month = request.query_params.get('month')
-    subject_id = request.query_params.get('subject_id')
+    subject_code = request.query_params.get('subject_code')  # Use subject_code instead of subject_id
     section = request.query_params.get('section')
     semester = request.query_params.get('semester')
 
     if not enroll_number:
         return Response({"error": "Missing enroll_number in query parameters."}, status=status.HTTP_400_BAD_REQUEST)
 
+    # Fetch student
     try:
-        student = StudentList.objects.get(enroll_number=enroll_number, year=year)
+        student = StudentList.objects.get(enroll_number=enroll_number, batch=batch_id)
     except StudentList.DoesNotExist:
-        return Response({"error": f"Student with enrollment number {enroll_number} not found for year {year}."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": f"Student with enrollment number {enroll_number} not found in batch {batch_id}."}, status=status.HTTP_404_NOT_FOUND)
 
-    if subject_id:
+    # Fetch subject by code and semester
+    if subject_code:
         try:
-            subject = Subject.objects.get(pk=subject_id)
+            subject = Subject.objects.get(code=subject_code, semester=semester)
         except Subject.DoesNotExist:
-            return Response({"error": f"Subject with ID {subject_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": f"Subject with code {subject_code} not found in semester {semester}."}, status=status.HTTP_404_NOT_FOUND)
     else:
-        return Response({"error": "Missing subject_id in query parameters."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "Missing subject_code in query parameters."}, status=status.HTTP_400_BAD_REQUEST)
 
+    # Fetch attendance records
     attendance = Attendance.objects.filter(
         student=student,
         subject=subject,
-        date__month=month,
         section=section,
         semester=semester
     )
 
+    # Filter by month if provided
+    if month:
+        attendance = attendance.filter(date__month=month)
+
     if not attendance.exists():
         return Response({"error": "No attendance records found for the provided criteria."}, status=status.HTTP_404_NOT_FOUND)
 
-    serializer = AttendanceSerializer(attendance, many=True)
-    return Response(serializer.data)
+    # Construct the desired output structure
+    response_data = {
+        "course": "BTech",
+        "batches": [
+            {
+                "name": f"Batch {batch_id}",
+                "semesters": [
+                    {
+                        "semester": f"Sem{semester}",
+                        "subjects": [
+                            {
+                                "name": subject.name,
+                                "temp_attendance": []
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
 
-@api_view(['GET'])
-def getFilteredAttendanceList(request):
-    year = request.query_params.get('year')
-    subject_id = request.query_params.get('subject_id')
-    section = request.query_params.get('section')
-    semester = request.query_params.get('semester')
+    # Organize attendance records by month
+    attendance_by_month = {}
+    for record in attendance:
+        month_name = record.date.strftime("%b")
+        if month_name not in attendance_by_month:
+            attendance_by_month[month_name] = []
 
-    attendance = Attendance.objects.all()
-    
-    if year:
-        attendance = attendance.filter(year=year)
-    if subject_id:
-        attendance = attendance.filter(subject_id=subject_id)
-    if section:
-        attendance = attendance.filter(section=section)
-    if semester:
-        attendance = attendance.filter(semester=semester)
-    
-    serializer = AttendanceSerializer(attendance, many=True)
-    return Response(serializer.data)
+        # Append attendance details
+        attendance_by_month[month_name].append({
+            "date": record.date.strftime("%Y-%m-%d"),
+            "list": [
+                {
+                    "enrollNo": record.student.enroll_number,
+                    "name": record.student.name,
+                    "section": record.section,
+                    "status": record.status.lower()  # Convert status to lowercase
+                }
+            ]
+        })
+
+    # Attach temp_attendance to the response data
+    for month, records in attendance_by_month.items():
+        response_data["batches"][0]["semesters"][0]["subjects"][0]["temp_attendance"].append({
+            "month": month,
+            "attendance": records
+        })
+
+    return Response(response_data, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 def addAttendance(request):
-    enroll_number = request.data.get('enroll_number')
-    subject_id = request.data.get('subject_id')
-    date = request.data.get('date')
-    year = request.data.get('year')
-    section = request.data.get('section')
-    semester = request.data.get('semester')
-    status_code = request.data.get('status', 'P')  # Default to 'Present' if not provided
+    data = request.data.get('batches', [])
+    
+    if not data:
+        return Response({"error": "Missing batches data"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    for batch in data:
+        batch_name = batch.get('name')
+        semesters = batch.get('semesters', [])
+        
+        for semester in semesters:
+            semester_number = semester.get('semester')[-1]
+            subjects = semester.get('subjects', [])
+            
+            for subject_data in subjects:
+                subject_name = subject_data.get('name')
+                
+                try:
+                    subject = Subject.objects.get(name=subject_name, semester=semester_number)
+                except Subject.DoesNotExist:
+                    return Response({"error": f"Subject {subject_name} not found for semester {semester_number}"}, status=status.HTTP_404_NOT_FOUND)
+                
+                temp_attendance = subject_data.get('temp_attendance', [])
+                
+                for month_data in temp_attendance:
+                    attendance_records = month_data.get('attendance', [])
+                    
+                    for attendance_record in attendance_records:
+                        attendance_date = attendance_record.get('date')
+                        students_list = attendance_record.get('list', [])
+                        
+                        try:
+                            parsed_date = datetime.strptime(attendance_date, "%Y-%m-%d").date()
+                        except ValueError:
+                            return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+                        
+                        for student_data in students_list:
+                            enroll_no = student_data.get('enrollNo')
+                            status_code = student_data.get('status', 'P').upper()
+                            section = student_data.get('section')
 
-    try:
-        student = StudentList.objects.get(enroll_number=enroll_number)
-    except StudentList.DoesNotExist:
-        return Response({"error": f"Student with enrollment number {enroll_number} not found."}, status=status.HTTP_404_NOT_FOUND)
+                            try:
+                                student = StudentList.objects.get(enroll_number=enroll_no)
+                            except StudentList.DoesNotExist:
+                                return Response({"error": f"Student with enrollment number {enroll_no} not found."}, status=status.HTTP_404_NOT_FOUND)
 
-    try:
-        subject = Subject.objects.get(pk=subject_id)
-    except Subject.DoesNotExist:
-        return Response({"error": f"Subject with ID {subject_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+                            if Attendance.objects.filter(student=student, subject=subject, date=parsed_date).exists():
+                                return Response({"error": f"Attendance for student {enroll_no} on {attendance_date} already exists."}, status=status.HTTP_400_BAD_REQUEST)
 
-    try:
-        parsed_date = datetime.strptime(date, "%Y-%m-%d").date()
-    except ValueError:
-        return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
-
-    if Attendance.objects.filter(student=student, subject=subject, date=parsed_date).exists():
-        return Response({"error": "Attendance record already exists for this student, subject, and date."}, status=status.HTTP_400_BAD_REQUEST)
-
-    attendance = Attendance(
-        student=student,
-        subject=subject,
-        date=parsed_date,
-        year=year,
-        section=section,
-        semester=semester,
-        status=status_code
-    )
-    attendance.save()
+                            Attendance.objects.create(
+                                student=student,
+                                subject=subject,
+                                date=parsed_date,
+                                status=status_code,
+                                section=section,
+                                semester=semester_number
+                            )
 
     return Response({"message": "Attendance added successfully!"}, status=status.HTTP_201_CREATED)
 
-# Exam views
+
+# Timetable Views
+@api_view(['POST'])
+def addTimetable(request):
+    serializer = TimetableSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({"message": "Timetable added successfully!"}, status=status.HTTP_201_CREATED)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+def getTimetable(request):
+    timetables = TimeTable.objects.all()
+    serializer = TimetableSerializer(timetables, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# Exam Views
 @api_view(['GET'])
 def getExamList(request):
     exams = Exam.objects.all()
     serializer = ExamSerializer(exams, many=True)
     return Response(serializer.data)
 
+
 @api_view(['POST'])
 def addExam(request):
     serializer = ExamSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
-        return Response({"message": "Exam added successfully!"    }, status=status.HTTP_201_CREATED)
+        return Response({"message": "Exam added successfully!"}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(['DELETE'])
 def deleteExam(request, exam_id):
     try:
@@ -237,12 +291,13 @@ def deleteExam(request, exam_id):
         return Response({"error": "Exam not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
-# Result views
+# Result Views
 @api_view(['GET'])
 def getResultList(request):
     results = Result.objects.all()
     serializer = ResultSerializer(results, many=True)
     return Response(serializer.data)
+
 
 @api_view(['POST'])
 def addResult(request):
@@ -251,6 +306,8 @@ def addResult(request):
         serializer.save()
         return Response({"message": "Result added successfully!"}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(['DELETE'])
 def deleteResult(request, result_id):
     try:
@@ -259,12 +316,15 @@ def deleteResult(request, result_id):
         return Response({"message": "Result deleted successfully!"}, status=status.HTTP_204_NO_CONTENT)
     except Result.DoesNotExist:
         return Response({"error": "Result not found."}, status=status.HTTP_404_NOT_FOUND)
-# Notification views
+
+
+# Notification Views
 @api_view(['GET'])
 def getNotificationList(request):
     notifications = Notification.objects.all()
     serializer = NotificationSerializer(notifications, many=True)
     return Response(serializer.data)
+
 
 @api_view(['POST'])
 def addNotification(request):
@@ -273,6 +333,7 @@ def addNotification(request):
         serializer.save()
         return Response({"message": "Notification added successfully!"}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['DELETE'])
 def deleteNotification(request, notification_id):
@@ -283,12 +344,14 @@ def deleteNotification(request, notification_id):
     except Notification.DoesNotExist:
         return Response({"error": "Notification not found."}, status=status.HTTP_404_NOT_FOUND)
 
-# Event views
+
+# Event Views
 @api_view(['GET'])
 def getEventList(request):
     events = Event.objects.all()
     serializer = EventSerializer(events, many=True)
     return Response(serializer.data)
+
 
 @api_view(['POST'])
 def addEvent(request):
@@ -297,6 +360,7 @@ def addEvent(request):
         serializer.save()
         return Response({"message": "Event added successfully!"}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['DELETE'])
 def deleteEvent(request, event_id):
@@ -307,12 +371,14 @@ def deleteEvent(request, event_id):
     except Event.DoesNotExist:
         return Response({"error": "Event not found."}, status=status.HTTP_404_NOT_FOUND)
 
-# AttendanceReport views
+
+# AttendanceReport Views
 @api_view(['GET'])
 def getAttendanceReportList(request):
     reports = AttendanceReport.objects.all()
     serializer = AttendanceReportSerializer(reports, many=True)
     return Response(serializer.data)
+
 
 @api_view(['POST'])
 def addAttendanceReport(request):
@@ -321,6 +387,7 @@ def addAttendanceReport(request):
         serializer.save()
         return Response({"message": "Attendance report added successfully!"}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['DELETE'])
 def deleteAttendanceReport(request, report_id):
@@ -331,12 +398,14 @@ def deleteAttendanceReport(request, report_id):
     except AttendanceReport.DoesNotExist:
         return Response({"error": "Attendance report not found."}, status=status.HTTP_404_NOT_FOUND)
 
-# Batch views
+
+# Batch Views
 @api_view(['GET'])
 def getBatchList(request):
     batches = Batch.objects.all()
     serializer = BatchSerializer(batches, many=True)
     return Response(serializer.data)
+
 
 @api_view(['POST'])
 def addBatch(request):
@@ -345,6 +414,7 @@ def addBatch(request):
         serializer.save()
         return Response({"message": "Batch added successfully!"}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['DELETE'])
 def deleteBatch(request, batch_id):
