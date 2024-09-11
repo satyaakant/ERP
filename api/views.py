@@ -60,7 +60,7 @@ def getTeacherList_Mitrr(request):
     teacher_data = []
     for teacher in teachers:
         subjects = Subject.objects.filter(teacher=teacher)
-        subjects_data = [{"name": subject.name, "code": subject.code, "semester": subject.semester, "year": subject.year} for subject in subjects]
+        subjects_data = [{"name": subject.name, "code": subject.code, "semester": subject.semester} for subject in subjects]
         teacher_data.append({
             "teacher_id": teacher.teacher_id,
             "name": teacher.name,

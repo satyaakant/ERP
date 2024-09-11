@@ -11,8 +11,8 @@ admin.site.register(CustomSession)
 
 # StudentList admin
 class StudentListAdmin(admin.ModelAdmin):
-    list_display = ('name', 'enroll_number', 'year', 'section', 'sem', 'email_id', 'batch')  # Display relevant fields
-    list_filter = ('year', 'section', 'batch')  # Filter by year, section, and batch
+    list_display = ('name', 'enroll_number', 'section', 'sem', 'email_id', 'batch')  # Display relevant fields
+    list_filter = ( 'section', 'batch')  # Filter by year, section, and batch
     search_fields = ('name', 'enroll_number', 'email_id')  # Allow searching by name, enrollment number, and email
 
 admin.site.register(StudentList, StudentListAdmin)
@@ -26,14 +26,14 @@ admin.site.register(TeacherList, TeacherListAdmin)
 
 # Batch admin
 class BatchAdmin(admin.ModelAdmin):
-    list_display = ('batch_name', 'year', 'description', 'semester')  # Display batch details
+    list_display = ('batch_name', 'description', 'semester')  # Display batch details
     search_fields = ('batch_name', 'description')  # Allow searching by batch name and description
 
 admin.site.register(Batch, BatchAdmin)
 
 # Subject admin
 class SubjectAdmin(admin.ModelAdmin):
-    list_display = ('name', 'code', 'semester', 'year')  # Display subject details
+    list_display = ('name', 'code', 'semester')  # Display subject details
     search_fields = ('name', 'code')  # Allow searching by subject name and code
 
 admin.site.register(Subject, SubjectAdmin)

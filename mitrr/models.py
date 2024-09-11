@@ -24,12 +24,11 @@ class CustomSession(models.Model):
 # Batch model
 class Batch(models.Model):
     batch_name = models.CharField(max_length=100)
-    year = models.IntegerField()
     description = models.TextField(blank=True, null=True)
     semester = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.batch_name} - {self.year}"
+        return f"{self.batch_name} "
 
 # StudentList model
 class StudentList(models.Model):
@@ -37,7 +36,6 @@ class StudentList(models.Model):
     name = models.CharField(max_length=100)
     section = models.CharField(max_length=100)
     sem = models.CharField(max_length=100)
-    year = models.CharField(max_length=100)
     email_id = models.EmailField(max_length=254)
     phone_number = models.CharField(max_length=15)
     password = models.CharField(max_length=100)
@@ -63,7 +61,6 @@ class Subject(models.Model):
     name = models.CharField(max_length=100)
     code = models.CharField(max_length=10, unique=True)
     semester = models.IntegerField()
-    year = models.IntegerField()
     teacher = models.ForeignKey(TeacherList, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
