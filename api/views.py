@@ -10,9 +10,19 @@ from .serializers import (
     StudentSerializer, TeacherSerializer, 
     AttendanceSerializer, TimetableSerializer, ExamSerializer, ResultSerializer,
     NotificationSerializer, EventSerializer, 
-    AttendanceReportSerializer, BatchSerializer
+    AttendanceReportSerializer, BatchSerializer, SubjectSerializer
 )
 
+@api_view(['GET'])
+def getSubjectsBySemester(request):
+    semester = request.query_params.get('semester')
+    
+    if semester is None:
+        return Response({"error": "Semester is required"}, status=400)
+
+    subjects = Subject.objects.filter(semester=semester)
+    serializer = SubjectSerializer(subjects, many=True)
+    return Response(serializer.data)
 # StudentList Views
 @api_view(['GET'])
 def getStudentList_Mitrr(request):
@@ -94,76 +104,52 @@ def deleteTeacher_Mitrr(request, teacher_id):
 
 # Attendance Views
 @api_view(['GET'])
-def getAttendanceList_Mitrr(request, batch_id):
-    enroll_number = request.query_params.get('enroll_number')
-    month = request.query_params.get('month')
-    subject_code = request.query_params.get('subject_code')  # Use subject_code instead of subject_id
-    section = request.query_params.get('section')
-    semester = request.query_params.get('semester')
-
-    if not enroll_number:
-        return Response({"error": "Missing enroll_number in query parameters."}, status=status.HTTP_400_BAD_REQUEST)
-
-    # Fetch student
-    try:
-        student = StudentList.objects.get(enroll_number=enroll_number, batch=batch_id)
-    except StudentList.DoesNotExist:
-        return Response({"error": f"Student with enrollment number {enroll_number} not found in batch {batch_id}."}, status=status.HTTP_404_NOT_FOUND)
-
-    # Fetch subject by code and semester
-    if subject_code:
-        try:
-            subject = Subject.objects.get(code=subject_code, semester=semester)
-        except Subject.DoesNotExist:
-            return Response({"error": f"Subject with code {subject_code} not found in semester {semester}."}, status=status.HTTP_404_NOT_FOUND)
-    else:
-        return Response({"error": "Missing subject_code in query parameters."}, status=status.HTTP_400_BAD_REQUEST)
-
-    # Fetch attendance records
-    attendance = Attendance.objects.filter(
-        student=student,
-        subject=subject,
-        section=section,
-        semester=semester
-    )
-
-    # Filter by month if provided
-    if month:
-        attendance = attendance.filter(date__month=month)
+def getAttendanceList_Mitrr(request):
+    # Fetch all attendance records
+    attendance = Attendance.objects.all()
 
     if not attendance.exists():
-        return Response({"error": "No attendance records found for the provided criteria."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "No attendance records found."}, status=status.HTTP_404_NOT_FOUND)
 
     # Construct the desired output structure
     response_data = {
         "course": "BTech",
-        "batches": [
-            {
-                "name": f"Batch {batch_id}",
-                "semesters": [
-                    {
-                        "semester": f"Sem{semester}",
-                        "subjects": [
-                            {
-                                "name": subject.name,
-                                "temp_attendance": []
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
+        "batches": []
     }
 
-    # Organize attendance records by month
-    attendance_by_month = {}
+    # Organize attendance records by batches and semesters
+    batch_dict = {}
     for record in attendance:
-        month_name = record.date.strftime("%b")
-        if month_name not in attendance_by_month:
-            attendance_by_month[month_name] = []
+        # Handle the case where the student's batch is None
+        if record.student.batch:
+            batch_name = f"Batch {record.student.batch.batch_name}"
+        else:
+            batch_name = "Unknown Batch"  # Default name for students without a batch
+
+        semester_name = f"Sem{record.semester}"
+
+        # Initialize batch and semester structure if not exists
+        if batch_name not in batch_dict:
+            batch_dict[batch_name] = {
+                "name": batch_name,
+                "semesters": {}
+            }
+        
+        if semester_name not in batch_dict[batch_name]["semesters"]:
+            batch_dict[batch_name]["semesters"][semester_name] = {
+                "semester": semester_name,
+                "subjects": {}
+            }
+
+        # Initialize subject structure
+        if record.subject.name not in batch_dict[batch_name]["semesters"][semester_name]["subjects"]:
+            batch_dict[batch_name]["semesters"][semester_name]["subjects"][record.subject.name] = {
+                "name": record.subject.name,
+                "temp_attendance": []
+            }
 
         # Append attendance details
-        attendance_by_month[month_name].append({
+        batch_dict[batch_name]["semesters"][semester_name]["subjects"][record.subject.name]["temp_attendance"].append({
             "date": record.date.strftime("%Y-%m-%d"),
             "list": [
                 {
@@ -175,12 +161,17 @@ def getAttendanceList_Mitrr(request, batch_id):
             ]
         })
 
-    # Attach temp_attendance to the response data
-    for month, records in attendance_by_month.items():
-        response_data["batches"][0]["semesters"][0]["subjects"][0]["temp_attendance"].append({
-            "month": month,
-            "attendance": records
-        })
+    # Format the data in the required structure
+    for batch_name, batch_data in batch_dict.items():
+        semesters = []
+        for semester_name, semester_data in batch_data["semesters"].items():
+            subjects = []
+            for subject_name, subject_data in semester_data["subjects"].items():
+                subjects.append(subject_data)
+            semester_data["subjects"] = subjects
+            semesters.append(semester_data)
+        batch_data["semesters"] = semesters
+        response_data["batches"].append(batch_data)
 
     return Response(response_data, status=status.HTTP_200_OK)
 
@@ -209,39 +200,32 @@ def addAttendance(request):
                 
                 temp_attendance = subject_data.get('temp_attendance', [])
                 
-                for month_data in temp_attendance:
-                    attendance_records = month_data.get('attendance', [])
+                for attendance_data in temp_attendance:
+                    attendance_date = attendance_data.get('date')
+                    students_list = attendance_data.get('list', [])
                     
-                    for attendance_record in attendance_records:
-                        attendance_date = attendance_record.get('date')
-                        students_list = attendance_record.get('list', [])
-                        
+                    try:
+                        parsed_date = datetime.strptime(attendance_date, "%Y-%m-%d").date()
+                    except ValueError:
+                        return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    for student_data in students_list:
+                        enroll_no = student_data.get('enrollNo')
+                        status_code = student_data.get('status', 'P').upper()
+                        section = student_data.get('section')
+
                         try:
-                            parsed_date = datetime.strptime(attendance_date, "%Y-%m-%d").date()
-                        except ValueError:
-                            return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
-                        
-                        for student_data in students_list:
-                            enroll_no = student_data.get('enrollNo')
-                            status_code = student_data.get('status', 'P').upper()
-                            section = student_data.get('section')
+                            student = StudentList.objects.get(enroll_number=enroll_no)
+                        except StudentList.DoesNotExist:
+                            return Response({"error": f"Student with enrollment number {enroll_no} not found."}, status=status.HTTP_404_NOT_FOUND)
 
-                            try:
-                                student = StudentList.objects.get(enroll_number=enroll_no)
-                            except StudentList.DoesNotExist:
-                                return Response({"error": f"Student with enrollment number {enroll_no} not found."}, status=status.HTTP_404_NOT_FOUND)
-
-                            if Attendance.objects.filter(student=student, subject=subject, date=parsed_date).exists():
-                                return Response({"error": f"Attendance for student {enroll_no} on {attendance_date} already exists."}, status=status.HTTP_400_BAD_REQUEST)
-
-                            Attendance.objects.create(
-                                student=student,
-                                subject=subject,
-                                date=parsed_date,
-                                status=status_code,
-                                section=section,
-                                semester=semester_number
-                            )
+                        # Save or update the attendance record
+                        attendance, created = Attendance.objects.update_or_create(
+                            student=student,
+                            subject=subject,
+                            date=parsed_date,
+                            defaults={'status': status_code, 'section': section, 'semester': semester_number}
+                        )
 
     return Response({"message": "Attendance added successfully!"}, status=status.HTTP_201_CREATED)
 

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Take Attendance</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+        }
+        label, select, input {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: center;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Take Attendance</h1>
+
+    <!-- Form to select batch, section, date, and subject -->
+    <form id="attendance-form">
+        <label for="batch">Batch</label>
+        <select id="batch" name="batch" required>
+            <option value="1">Batch 1</option>
+            <option value="2">Batch 2</option>
+        </select>
+
+        <label for="section">Section</label>
+        <select id="section" name="section" required>
+            <option value="A">A</option>
+            <option value="B">B</option>
+        </select>
+
+        <label for="date">Date</label>
+        <input type="date" id="date" name="date" required>
+
+        <label for="semester">Semester</label>
+        <select id="semester" name="semester" required>
+            <option value="Sem1">Semester 1</option>
+            <option value="Sem2">Semester 2</option>
+        </select>
+
+        <label for="subject">Subject</label>
+        <select id="subject" name="subject" required>
+            <option value="Chemistry">Chemistry</option>
+            <option value="Physics">Physics</option>
+        </select>
+
+        <button type="button" onclick="filterStudents()">Fetch Students</button>
+    </form>
+
+    <!-- Placeholder for the attendance form once students are fetched -->
+    <div id="students-list">
+        <!-- Students will be displayed here -->
+    </div>
+</div>
+
+<script>
+    let allStudents = [];  // Variable to hold all student data
+
+    // Fetch all students on page load
+    function fetchAllStudents() {
+        fetch(`http://127.0.0.1:8000/api/mitrr/students/`)  // Fetch all students without filtering by batch
+        .then(response => response.json())
+        .then(data => {
+            allStudents = data;  // Store the fetched student data
+        })
+        .catch(error => {
+            console.error('Error fetching students:', error);
+        });
+    }
+
+    // Fetch students based on the selected batch and section
+    function filterStudents() {
+        const batch = document.getElementById('batch').value;
+        const section = document.getElementById('section').value;
+
+        // Filter students based on the selected batch and section
+        const filteredStudents = allStudents.filter(student => student.batch == batch && student.section == section);
+
+        // Display the filtered students in a table
+        let html = '<h3>Mark Attendance</h3>';
+        html += '<form id="mark-attendance-form">';
+
+        html += '<table><thead><tr><th>Enrollment Number</th><th>Name</th><th>Attendance</th></tr></thead><tbody>';
+        filteredStudents.forEach(student => {
+            html += `<tr>
+                        <td>${student.enroll_number}</td>
+                        <td>${student.name}</td>
+                        <td>
+                            <select name="status_${student.enroll_number}">
+                                <option value="P">Present</option>
+                                <option value="A">Absent</option>
+                            </select>
+                        </td>
+                     </tr>`;
+        });
+        html += '</tbody></table>';
+        html += '<button type="button" onclick="submitAttendance()">Submit Attendance</button>';
+        html += '</form>';
+
+        document.getElementById('students-list').innerHTML = html;
+    }
+
+    // Function to submit the attendance data in the desired JSON format
+    function submitAttendance() {
+        const formData = new FormData(document.getElementById('mark-attendance-form'));
+        const batch = document.getElementById('batch').value;
+        const section = document.getElementById('section').value;
+        const date = document.getElementById('date').value;
+        const subject = document.getElementById('subject').value;
+        const semester = document.getElementById('semester').value;
+
+        let attendanceData = {
+            batches: [{
+                name: `Batch ${batch}`,
+                semesters: [{
+                    semester: semester,
+                    subjects: [{
+                        name: subject,
+                        temp_attendance: [{
+                            date: date,
+                            list: []
+                        }]
+                    }]
+                }]
+            }]
+        };
+
+        // Gather student attendance status from the form data
+        formData.forEach((value, key) => {
+            const enrollNo = key.split('_')[1];
+            attendanceData.batches[0].semesters[0].subjects[0].temp_attendance[0].list.push({
+                enrollNo: enrollNo,
+                status: value,
+                section: section
+            });
+        });
+
+        // Send the attendance data to the server
+        fetch(`http://127.0.0.1:8000/api/attendance/add/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()  // Add CSRF token for Django
+            },
+            body: JSON.stringify(attendanceData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message === "Attendance added successfully!") {
+                alert('Attendance submitted successfully!');
+            } else {
+                alert('Error submitting attendance: ' + JSON.stringify(data));
+            }
+        })
+        .catch(error => {
+            console.error('Error submitting attendance:', error);
+        });
+    }
+
+    // Function to get CSRF token for Django
+    function getCSRFToken() {
+        let cookieValue = null;
+        const name = 'csrftoken';
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Call the function to fetch all students when the page loads
+    window.onload = fetchAllStudents;
+</script>
+
+</body>
+</html>
